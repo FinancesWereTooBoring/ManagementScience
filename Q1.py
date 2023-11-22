@@ -1,5 +1,6 @@
 import gurobipy as gb
 import pandas as pd
+import ast
 
 # Question 1.2, Data preparation
 data = pd.read_csv("data/flights-1.csv",  encoding='latin-1')
@@ -22,11 +23,15 @@ large = model_Q1.addVars(distances, name="large", vtype=gb.GRB.INTEGER, lb=0)
 num_of_passengers = model_Q1.addVars(
     distances, name="Num_of_pass_", vtype=gb.GRB.INTEGER, lb=0)
 
+# That's how I calculate the profit
 model_Q1.setObjective(gb.quicksum(distances[route]*(0.5 * small[route] + 2 * medium[route] + 10 * large[route])
                                   for route in route_list), gb.GRB.MAXIMIZE)
 
+# the number of customers should be lower or equal to the demand
 model_Q1.addConstrs(num_of_passengers[route] <= demands[route]
                     for route in route_list)
+
+# number of customers per route should be equal to each plane's full capacity by number of those planes
 model_Q1.addConstrs(num_of_passengers[route] == 50 * small[route] + 100 * medium[route] + 300 * large[route]
                     for route in route_list)
 model_Q1.optimize()
@@ -34,18 +39,71 @@ model_Q1.ObjVal
 vals = model_Q1.printAttr(["X", "Obj"])
 all_vars = model_Q1.getVars()
 
+# Since there are a lot of variables, I decided to move them into a dataframe format
 values = model_Q1.getAttr("X", all_vars)
 names = model_Q1.getAttr("VarName", all_vars)
 
 res = pd.DataFrame({"names": names, "values": values})
 
-res[res["names"].str.startswith("large")]["values"].sum()
+# Question 1.4 I am tired, but I am still standing
+
+# (a)
+daily_profit = model_Q1.ObjVal
+
+# (b)
+# Basically, we just find a sum of the flights by the type of planes.
 small_res = res[res["names"].str.startswith("small")]["values"].sum()
 medium_res = res[res["names"].str.startswith("medium")]["values"].sum()
 large_res = res[res["names"].str.startswith("large")]["values"].sum()
-objective_value = model_Q1.ObjVal
-summary = pd.DataFrame({"result": ["small", "medium", "large", "objective_value"], "values": [
-                       small_res, medium_res, large_res, objective_value]})
+
+# (c)
+# This one was tough. I decided to create a data frame with routes, distances, demand,
+# Num of each plane type, and total amount of passengers. It is needed since we can't really
+# see the revenue, costs and missed demand otherwise (well, or for me doing this was easier than
+# checking 6k rows of Gurobi output)
+
+
+distances_df = pd.DataFrame(list(distances.items()), columns=["Route", "dist"])
+demand_df = pd.DataFrame(list(demands.items()), columns=["Route", "demand"])
+dis_dem = distances_df.merge(demand_df, on=["Route"], how="left")
+
+# This for loop just reshapes the data from long to more wide.
+# I create columns with the types of planes and num of passengers.
+# Why? Because, that's how I figured out to merge it with distance and demand
+values = ["small", "medium", "large", "Num_of_pass_"]
+output = pd.DataFrame()
+
+for val in values:
+    res_df = res[res["names"].str.startswith(val)]
+
+    # The next rows just make sure that the Route columns are the same - Series of tuples.
+    res_df = res_df.rename(columns={"values": f"{val}_values"})
+    res_df["Route"] = '(' + \
+        res_df['names'].str.extract(rf'{val}\[(.*?)\]') + ')'
+    res_df.drop(columns=['names'], inplace=True)
+    if output.empty:
+        output = res_df
+    else:
+        output = output.merge(res_df, on=["Route"], how="left")
+
+output["Route"] = output["Route"].str.strip('()').str.split(',').apply(tuple)
+
+# Hooray, we merged them. Check out how pretty the data is after that.
+hopefully_last_output = dis_dem.merge(output, on=["Route"], how="left")
+
+
+# Here, I finally answer 1.4(c)
+rev_raw = hopefully_last_output["dist"]*(5 * hopefully_last_output["small_values"] + 10 *
+                                         hopefully_last_output["medium_values"] + 30 * hopefully_last_output["large_values"])
+revenue = rev_raw.sum()
+
+costs_raw = hopefully_last_output["dist"]*(4.5 * hopefully_last_output["small_values"] + 8 *
+                                           hopefully_last_output["medium_values"] + 10 * hopefully_last_output["large_values"])
+costs = costs_raw.sum()
+
+# Summary table
+summary = pd.DataFrame({"result": ["Daily profit", "small", "medium", "large", "revenue", "costs"], "values": [
+                       daily_profit, small_res, medium_res, large_res, revenue, costs]})
 
 """
 with pd.ExcelWriter("output/Ver1_Outcome.xlsx") as writer:
