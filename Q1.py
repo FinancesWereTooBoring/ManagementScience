@@ -48,7 +48,7 @@ summary = pd.DataFrame({"result": ["small", "medium", "large", "objective_value"
                        small_res, medium_res, large_res, objective_value]})
 
 """
-with pd.ExcelWriter("Ver1_Outcome.xlsx") as writer:
+with pd.ExcelWriter("output/Ver1_Outcome.xlsx") as writer:
     res.to_excel(writer, sheet_name="raw_outcome", index=False)
     summary.to_excel(writer, sheet_name="summary", index=False)
 """
