@@ -101,12 +101,35 @@ costs_raw = hopefully_last_output["dist"]*(4.5 * hopefully_last_output["small_va
                                            hopefully_last_output["medium_values"] + 10 * hopefully_last_output["large_values"])
 costs = costs_raw.sum()
 
-# Summary table
-summary = pd.DataFrame({"result": ["Daily profit", "small", "medium", "large", "revenue", "costs"], "values": [
-                       daily_profit, small_res, medium_res, large_res, revenue, costs]})
+# (d)
+profit_margin = daily_profit/revenue
 
-"""
-with pd.ExcelWriter("output/Ver1_Outcome.xlsx") as writer:
+# (e)
+
+daily_number_of_passengers = hopefully_last_output["Num_of_pass__values"].sum()
+
+# (f)
+
+# Since I assumed that the airplane goes only if it's full, the utilization is 100%
+
+# (g)
+
+# WE calculate what is the share of missed demand w.r.t the whole demand
+lost_demand = (hopefully_last_output["demand"].sum(
+) - hopefully_last_output["Num_of_pass__values"].sum())/hopefully_last_output["demand"].sum()
+
+
+# Summary table
+summary = pd.DataFrame({"result": [
+    "Daily profit", "small", "medium", "large", "revenue", "costs", "profit margin", "total num of passenger", "lost demand"],
+    "values": [
+    daily_profit, small_res, medium_res, large_res, revenue, costs, profit_margin, daily_number_of_passengers, lost_demand]})
+
+
+with pd.ExcelWriter("output/Ver2_Outcome.xlsx") as writer:
     res.to_excel(writer, sheet_name="raw_outcome", index=False)
+    hopefully_last_output.to_excel(
+        writer, sheet_name="final_table", index=False)
     summary.to_excel(writer, sheet_name="summary", index=False)
-"""
+
+# TODO: Fix issue with Zurich and Dusseldorf - those values are not read properly from the data file
