@@ -116,8 +116,12 @@ profit_margin = daily_profit/revenue
 daily_number_of_passengers = hopefully_last_output["Num_of_pass__values"].sum()
 
 # (f)
-
-# Since I assumed that the airplane goes only if it's full, the utilization is 100%
+full_capacity = (50 * hopefully_last_output["small_values"] + 100 *
+                 hopefully_last_output["medium_values"] +
+                 300 * hopefully_last_output["large_values"]).sum()
+utilization = 1 - \
+    (full_capacity -
+     hopefully_last_output["Num_of_pass__values"].sum()) / full_capacity
 
 # (g)
 
@@ -128,9 +132,9 @@ lost_demand = (hopefully_last_output["demand"].sum(
 
 # Summary table
 summary = pd.DataFrame({"result": [
-    "Daily profit", "small", "medium", "large", "revenue", "costs", "profit margin", "total num of passenger", "lost demand"],
+    "Daily profit", "small", "medium", "large", "revenue", "costs", "profit margin", "total num of passenger", "capacity utilization", "lost demand"],
     "values": [
-    daily_profit, small_res, medium_res, large_res, revenue, costs, profit_margin, daily_number_of_passengers, lost_demand]})
+    daily_profit, small_res, medium_res, large_res, revenue, costs, profit_margin, daily_number_of_passengers, utilization, lost_demand]})
 
 num_of_files = len(os.listdir("output")) + 1
 with pd.ExcelWriter(f"output/Ver{num_of_files}_Outcome.xlsx") as writer:
