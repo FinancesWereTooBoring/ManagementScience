@@ -5,6 +5,13 @@ import ast
 # Question 1.2, Data preparation
 data = pd.read_csv("data/flights-1.csv",  encoding='latin-1')
 
+# Fix of the issue with different decodings
+issues = {"ZÃ¼rich": "Zurich",
+          "DÃ¼sseldorf": "Dusseldorf", "MÃ¡laga": "Malaga"}
+for key, value in issues.items():
+    data.loc[data["departureCity"] == key, "departureCity"] = value
+
+
 capacity = {"small": 50, "medium": 100, "large": 300}
 cost_per_mile = {"small": 4.5, "medium": 8, "large": 20}
 charge = 0.1
