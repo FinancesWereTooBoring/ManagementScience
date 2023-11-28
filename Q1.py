@@ -1,6 +1,6 @@
 import gurobipy as gb
 import pandas as pd
-import ast
+import os
 
 # Question 1.2, Data preparation
 data = pd.read_csv("data/flights-1.csv",  encoding='latin-1')
@@ -10,7 +10,7 @@ issues = {"ZÃ¼rich": "Zurich",
           "DÃ¼sseldorf": "Dusseldorf", "MÃ¡laga": "Malaga"}
 for key, value in issues.items():
     data.loc[data["departureCity"] == key, "departureCity"] = value
-
+    data.loc[data["arrivalCity"] == key, "arrivalCity"] = value
 
 capacity = {"small": 50, "medium": 100, "large": 300}
 cost_per_mile = {"small": 4.5, "medium": 8, "large": 20}
@@ -31,7 +31,7 @@ num_of_passengers = model_Q1.addVars(
     distances, name="Num_of_pass_", vtype=gb.GRB.INTEGER, lb=0)
 
 # That's how I calculate the profit
-model_Q1.setObjective(gb.quicksum(distances[route]*(0.5 * small[route] + 2 * medium[route] + 10 * large[route])
+model_Q1.setObjective(gb.quicksum(0.1*distances[route]*num_of_passengers[route] - distances[route]*(4*small[route] + 8 * medium[route] + 20 * large[route])
                                   for route in route_list), gb.GRB.MAXIMIZE)
 
 # the number of customers should be lower or equal to the demand
@@ -132,8 +132,8 @@ summary = pd.DataFrame({"result": [
     "values": [
     daily_profit, small_res, medium_res, large_res, revenue, costs, profit_margin, daily_number_of_passengers, lost_demand]})
 
-
-with pd.ExcelWriter("output/Ver2_Outcome.xlsx") as writer:
+num_of_files = len(os.listdir("output")) + 1
+with pd.ExcelWriter(f"output/Ver{num_of_files}_Outcome.xlsx") as writer:
     res.to_excel(writer, sheet_name="raw_outcome", index=False)
     hopefully_last_output.to_excel(
         writer, sheet_name="final_table", index=False)
