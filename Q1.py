@@ -32,7 +32,7 @@ model_Q1.addConstrs(num_of_passengers[route] <= demands[route]
                     for route in route_list)
 
 # number of customers per route should be equal to each plane's full capacity by number of those planes
-model_Q1.addConstrs(num_of_passengers[route] == 50 * small[route] + 100 * medium[route] + 300 * large[route]
+model_Q1.addConstrs(num_of_passengers[route] <= 50 * small[route] + 100 * medium[route] + 300 * large[route]
                     for route in route_list)
 model_Q1.optimize()
 model_Q1.ObjVal
