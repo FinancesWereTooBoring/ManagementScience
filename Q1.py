@@ -138,5 +138,3 @@ with pd.ExcelWriter("output/Ver2_Outcome.xlsx") as writer:
     hopefully_last_output.to_excel(
         writer, sheet_name="final_table", index=False)
     summary.to_excel(writer, sheet_name="summary", index=False)
-
-# TODO: Fix issue with Zurich and Dusseldorf - those values are not read properly from the data file
