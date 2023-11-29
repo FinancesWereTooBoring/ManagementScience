@@ -101,8 +101,9 @@ hopefully_last_output = dis_dem.merge(output, on=["Route"], how="left")
 
 
 # Here, I finally answer 1.4(c)
-rev_raw = hopefully_last_output["dist"]*(5 * hopefully_last_output["small_values"] + 10 *
-                                         hopefully_last_output["medium_values"] + 30 * hopefully_last_output["large_values"])
+# TODO: Change revenue
+rev_raw = hopefully_last_output["dist"] * \
+    hopefully_last_output["Num_of_pass__values"]*0.1
 revenue = rev_raw.sum()
 
 costs_raw = hopefully_last_output["dist"]*(4.5 * hopefully_last_output["small_values"] + 8 *
