@@ -31,7 +31,7 @@ num_of_passengers = model_Q1.addVars(
     distances, name="Num_of_pass_", vtype=gb.GRB.INTEGER, lb=0)
 
 # That's how I calculate the profit
-model_Q1.setObjective(gb.quicksum(0.1*distances[route]*num_of_passengers[route] - distances[route]*(4.5*small[route] + 8 * medium[route] + 20 * large[route])
+model_Q1.setObjective(gb.quicksum(charge*distances[route]*num_of_passengers[route] - distances[route]*(cost_per_mile["small"]*small[route] + cost_per_mile["medium"] * medium[route] + cost_per_mile["large"] * large[route])
                                   for route in route_list), gb.GRB.MAXIMIZE)
 
 # the number of customers should be lower or equal to the demand
@@ -39,7 +39,7 @@ model_Q1.addConstrs(num_of_passengers[route] <= demands[route]
                     for route in route_list)
 
 # number of customers per route should be equal to each plane's full capacity by number of those planes
-model_Q1.addConstrs(num_of_passengers[route] <= 50 * small[route] + 100 * medium[route] + 300 * large[route]
+model_Q1.addConstrs(num_of_passengers[route] <= capacity["small"] * small[route] + capacity["medium"] * medium[route] + capacity["large"] * large[route]
                     for route in route_list)
 
 model_Q1.optimize()
