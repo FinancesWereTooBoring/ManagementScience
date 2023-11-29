@@ -107,7 +107,7 @@ rev_raw = hopefully_last_output["dist"] * \
 revenue = rev_raw.sum()
 
 costs_raw = hopefully_last_output["dist"]*(4.5 * hopefully_last_output["small_values"] + 8 *
-                                           hopefully_last_output["medium_values"] + 10 * hopefully_last_output["large_values"])
+                                           hopefully_last_output["medium_values"] + 20 * hopefully_last_output["large_values"])
 costs = costs_raw.sum()
 
 # (d)
