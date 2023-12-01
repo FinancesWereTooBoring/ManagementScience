@@ -56,11 +56,14 @@ y_direct = model2.addVars(cities, cities, name="direct_used", vtype=gb.GRB.BINAR
 # Binary variables for indirect routes
 y_indirect = model2.addVars(indirect_revenue_per_customer.keys(), name="indirect_used", vtype=gb.GRB.BINARY, lb=0)
 
-model2.addConstrs(y_direct.sum(i, j) + y_indirect.sum(i, '*', j) <= 1
-                  for i in cities
-                  for j in cities
-                  for k in cities
-                  if i != j and i != k and j != k)
+
+# not sure if we need such a constraint:
+
+# model2.addConstrs(y_direct.sum(i, j) + y_indirect.sum(i, '*', j) <= 1
+                 # for i in cities
+                 # for j in cities
+                 # for k in cities
+                 # if i != j and i != k and j != k)
 
 #Only 1 hub
 
