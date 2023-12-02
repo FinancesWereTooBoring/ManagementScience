@@ -84,16 +84,24 @@ is_hub = model_Q2.addVars(cities_with_hubs, "*", "*", vtype=gb.GRB.BINARY, name=
 
 model_Q2.setObjective(
     gb.quicksum(
+        charge_direct * Distances[direct] * num_of_passengers[direct] -
+        Distances[direct] * (
+            cost_per_mile["small"] * small[direct] +
+            cost_per_mile["medium"] * medium[direct] +
+            cost_per_mile["large"] * large[direct])
+        for direct in Distances.keys() if direct[2] == "Direct") +
+    gb.quicksum(
         charge_indirect * Distances[indirect] * num_of_passengers[indirect] -
         Distances[indirect] * (
             cost_per_mile["small"] * small[indirect] +
             cost_per_mile["medium"] * medium[indirect] +
             cost_per_mile["large"] * large[indirect])
-        for indirect in Distances.keys() if indirect[2] == "Indirect") +
+        for indirect in Distances.keys() if indirect[2] == "Indirect")+
     gb.quicksum(
         2* is_hub[city, "*", "*"]
         for city in cities_with_hubs),
     gb.GRB.MAXIMIZE)
+
 
 model_Q2.addConstrs(
     num_of_passengers[departure, arrival, route] <= Demand[departure, arrival]
