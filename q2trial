@@ -1,0 +1,103 @@
+df = pd.read_csv("flights-1.csv", encoding='utf-8')
+
+# Joining the DataFrame with itself on the departure city
+df2 = df.set_index('departureCity').join(df.set_index('departureCity'), lsuffix="first", rsuffix="second").reset_index()
+
+# Filtering out rows where the arrival cities match
+df2 = df2[df2.arrivalCityfirst != df2.arrivalCitysecond]
+
+# Calculating the total distance as the sum of the distances from departure to hub and hub to arrival
+df2["distance"] = df2.Distancefirst + df2.Distancesecond
+
+# Selecting relevant columns
+df2 = df2[["departureCity", "arrivalCityfirst", "arrivalCitysecond", "distance"]]
+
+# Renaming columns
+df2.columns = ["Hub", "arrivalCity", "departureCity", "Distance"] 
+
+
+merged_df = df2.merge(df[["departureCity", "arrivalCity", "Distance", "Demand"]],
+               on=["departureCity", "arrivalCity"],
+               how="left")
+
+merged_df.columns = ["Hub", "arrivalCity", "departureCity", "IndirectDistance","DirectDistance", "Demand"]
+
+merged_df["1.3times_Direct"] = 1.3 * merged_df["DirectDistance"]
+merged_df = merged_df[["Hub", "arrivalCity", "departureCity", "IndirectDistance", "DirectDistance", "1.3times_Direct", "Demand"]]
+
+merged_df.loc[merged_df["IndirectDistance"] >= merged_df["DirectDistance"] * 1.3, "Hub"] = ""
+merged_df["RouteDistance"] = merged_df["DirectDistance"] 
+
+mask = merged_df["Hub"] != ""
+merged_df.loc[mask, "RouteDistance"] = merged_df.loc[mask, "IndirectDistance"]
+merged_df["IndirectUsed"] = (merged_df["Hub"] != "").astype(int) # Presence of a hub
+
+
+
+flights=[]
+for index,row in merged_df.iterrows():
+    if row.Hub=="":
+        flights.append((row.departureCity,row.arrivalCity))
+    else:
+        flights.append((row.departureCity,row.Hub))
+        flights.append((row.Hub,row.departureCity))
+flights=list(set(flights))#removing duplicates
+
+ItineraryFlights = {}
+for index, row in merged_df.iterrows():
+    itflights = []
+    if row.Hub == "":
+        itflights.append((row.departureCity, row.arrivalCity))
+        ItineraryFlights[row.departureCity, row.arrivalCity, "Direct"] = itflights
+    else:
+        itflights.append((row.departureCity, row.Hub))
+        itflights.append((row.Hub, row.arrivalCity))
+        ItineraryFlights[row.departureCity, row.arrivalCity, "Indirect"] = itflights
+Demand = {}
+
+Distances = {}
+for index,row in merged_df.iterrows():
+    Demand[row.departureCity, row.arrivalCity] = row.Demand
+    Distances[row.departureCity, row.arrivalCity, "Direct"] = row.DirectDistance
+    Distances[row.departureCity, row.arrivalCity, "Indirect"] = row.IndirectDistance
+    
+capacity = {"small": 50, "medium": 100, "large": 300}
+cost_per_mile = {"small": 4.5, "medium": 8, "large": 20}
+charge_indirect = 0.08
+charge_direct=0.1
+
+model_Q2 = gb.Model()
+
+small = model_Q2.addVars(Distances, name="small", vtype=gb.GRB.INTEGER, lb=0)
+medium = model_Q2.addVars(Distances, name="medium", vtype=gb.GRB.INTEGER, lb=0)
+large = model_Q2.addVars(Distances, name="large", vtype=gb.GRB.INTEGER, lb=0)
+num_of_passengers = model_Q2.addVars(Distances, name="Num_of_pass_", vtype=gb.GRB.INTEGER, lb=0)
+
+model_Q2.setObjective(
+    gb.quicksum(
+        charge_direct * Distances[direct] * num_of_passengers[direct] -
+        Distances[direct] * (
+            cost_per_mile["small"] * small[direct] +
+            cost_per_mile["medium"] * medium[direct] +
+            cost_per_mile["large"] * large[direct])
+        for direct in Distances.keys() if direct[2] == "Direct") +
+    gb.quicksum(
+        charge_indirect * Distances[indirect] * num_of_passengers[indirect] -
+        Distances[indirect] * (
+            cost_per_mile["small"] * small[indirect] +
+            cost_per_mile["medium"] * medium[indirect] +
+            cost_per_mile["large"] * large[indirect])
+        for indirect in Distances.keys() if indirect[2] == "Indirect"),gb.GRB.MAXIMIZE)
+
+model_Q2.addConstrs(
+    num_of_passengers[departure, arrival, route] <= Demand[departure, arrival]
+    for (departure, arrival, route) in Distances.keys()
+    if route in ["Direct", "Indirect"])
+
+model_Q2.addConstrs( num_of_passengers[departure, arrival, route] <=capacity["small"] * small[departure, arrival, route] +
+    capacity["medium"] * medium[departure, arrival, route] + capacity["large"] * large[departure, arrival, route]
+    for (departure, arrival, route) in Distances.keys()if route in ["Direct", "Indirect"])
+
+
+model_Q2.optimize()
+model_Q2.ObjVal
