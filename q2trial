@@ -73,6 +73,15 @@ medium = model_Q2.addVars(Distances, name="medium", vtype=gb.GRB.INTEGER, lb=0)
 large = model_Q2.addVars(Distances, name="large", vtype=gb.GRB.INTEGER, lb=0)
 num_of_passengers = model_Q2.addVars(Distances, name="Num_of_pass_", vtype=gb.GRB.INTEGER, lb=0)
 
+# Define the set of cities including hubs
+cities_with_hubs = set(city for (city, _, _) in Distances.keys() if city)
+routes = set(route for (_, _, route) in Distances.keys())
+
+# Decision variable for hub selection
+is_hub = model_Q2.addVars(cities_with_hubs, "*", "*", vtype=gb.GRB.BINARY, name="IsHub")
+
+
+
 model_Q2.setObjective(
     gb.quicksum(
         charge_direct * Distances[direct] * num_of_passengers[direct] -
@@ -87,7 +96,12 @@ model_Q2.setObjective(
             cost_per_mile["small"] * small[indirect] +
             cost_per_mile["medium"] * medium[indirect] +
             cost_per_mile["large"] * large[indirect])
-        for indirect in Distances.keys() if indirect[2] == "Indirect"),gb.GRB.MAXIMIZE)
+        for indirect in Distances.keys() if indirect[2] == "Indirect")+
+    gb.quicksum(
+        2* is_hub[city, "*", "*"]
+        for city in cities_with_hubs),
+    gb.GRB.MAXIMIZE)
+
 
 model_Q2.addConstrs(
     num_of_passengers[departure, arrival, route] <= Demand[departure, arrival]
@@ -98,6 +112,23 @@ model_Q2.addConstrs( num_of_passengers[departure, arrival, route] <=capacity["sm
     capacity["medium"] * medium[departure, arrival, route] + capacity["large"] * large[departure, arrival, route]
     for (departure, arrival, route) in Distances.keys()if route in ["Direct", "Indirect"])
 
+#made it choose hubs
+model_Q2.addConstr(gb.quicksum(is_hub[city, "*", "*"] for city in cities_with_hubs) <= 2) 
+
+
+for city in cities_with_hubs:
+    if city in merged_df['IndirectUsed'].unique():  
+        model_Q2.addConstr(is_hub[city, "*", "*"] == merged_df.loc[merged_df['IndirectUsed'] == 1, 'IndirectUsed'].astype(int)[0])
+
+
 
 model_Q2.optimize()
-model_Q2.ObjVal
+if model_Q2.status == gb.GRB.OPTIMAL:
+   
+    hub_values = model_Q2.getAttr('x', is_hub)
+
+    
+    selected_hubs = [city for city in cities_with_hubs if hub_values[city, "*", "*"] == 1]
+    print("Selected Hubs:", selected_hubs)
+else:
+    print("Optimization was not successful.")
