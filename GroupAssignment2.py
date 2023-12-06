@@ -71,11 +71,14 @@ def monthly_behaviour(num_of_proj,  bid):
     return monthly_costs, monthly_revenue, missed_projects, taken_projects
 
 
-total_costs, total_revenue, total_missed_projects, total_taken_projects = 0, 0, 0, 0
+total_costs, total_revenue, total_missed_projects, total_taken_projects = [], [], 0, 0
 for monthly_proj in num_of_projects_per_month:
     monthly_costs, monthly_revenue, missed_projects, taken_projects = monthly_behaviour(
         monthly_proj, 20000)
-    total_costs += monthly_costs
-    total_revenue += monthly_revenue
+    total_costs.append(monthly_costs)
+    total_revenue.append(monthly_revenue)
     total_missed_projects += missed_projects
     total_taken_projects += taken_projects
+
+
+print("Hello world!")
