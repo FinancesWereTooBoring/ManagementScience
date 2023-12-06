@@ -19,11 +19,12 @@ def likelihood_of_accepting(q, b):
 
 
 class Simulation:
-    def __init__(self, bid, n=50):
+    def __init__(self, bid=None, n=50, flow_bid=False):
         self.n = n
         self.num_of_projects_per_month = np.random.poisson(4, size=n)
         self.employees_scenario_1 = create_workers()
         self.bid = bid
+        self.flow_bid = flow_bid
         self.intitalisation()
 
     def monthly_behaviour(self, num_of_proj):
@@ -54,6 +55,8 @@ class Simulation:
                 # Please optimize me
                 potential_quality = np.mean(
                     [self.employees_scenario_1[worker]["level"] for worker in people])
+                if not self.bid:
+                    self.bid = 2000 * (2 * potential_quality + 6.5)
                 is_accepted = likelihood_of_accepting(
                     q=potential_quality, b=self.bid)
                 # I am not sure if we have to calculate it like this, or just take expected values.
@@ -76,6 +79,10 @@ class Simulation:
                 # if we formed a team with more people in a team than needed - error
                 print("More people in a team than needed")
                 break
+
+            if self.flow_bid:
+                self.bid = None
+
         return monthly_costs, monthly_revenue, missed_projects, taken_projects, man_months
 
     def intitalisation(self):
@@ -88,8 +95,8 @@ class Simulation:
             self.total_missed_projects += missed_projects
             self.total_taken_projects += taken_projects
             self.total_man_months += man_months
-        self.total_profit = [a - b for a,
-                             b in zip(self.total_revenue, self.total_costs)]
+        self.total_profit = [self.total_revenue[i] - self.total_costs[i]
+                             for i in range(len(self.total_revenue))]
         # Missed proj/all the projs
         self.proportion_of_missed_proj = self.total_missed_projects / \
             (self.num_of_projects_per_month.sum())
@@ -102,23 +109,25 @@ class Simulation:
         ax = sn.histplot(self.total_revenue, kde=True, bins=50)
         ax.set(xlabel="Revenue", ylabel="Probability")
         plt.show()
+        plt.close()
 
     def profit_plot(self):
         # Profit plot
         a2 = sn.histplot(self.total_profit, kde=True, bins=50)
         a2.set(xlabel="Profit", ylabel="Probability")
         plt.show()
+        plt.close()
 
 
-# Scenario 1:
-scenario_1 = Simulation(20000)
+# Strategy 1:
+scenario_1 = Simulation(bid=20000)
 scenario_1.revenue_plot()
 scenario_1.profit_plot()
 scenario_1.proportion_of_missed_proj
 scenario_1.utilization_man_months
 
-# Scenario 2:
-proposed_bids = np.random.randint(100, 50000, 1000)
+# Strategy 2:
+proposed_bids = np.random.randint(100, 50000, 100)
 highest_exp_rev = 0
 best_bid = 0
 outcome = {}
@@ -128,3 +137,11 @@ for bid in proposed_bids:
         best_bid = bid
         highest_exp_rev = np.mean(scenario.total_revenue)
     outcome[bid] = np.mean(scenario.total_revenue)
+
+# Strategy 3:
+
+strategy_3 = Simulation(n=50, flow_bid=True)
+strategy_3.revenue_plot()
+strategy_3.profit_plot()
+strategy_3.proportion_of_missed_proj
+strategy_3.utilization_man_months
