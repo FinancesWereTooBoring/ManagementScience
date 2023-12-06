@@ -1,7 +1,8 @@
 from create_workers import create_workers
 import numpy as np
 import gurobipy as gb
-
+import seaborn as sn
+import matplotlib.pyplot as plt
 # Set up dictionaries
 costs = {5: 16000, 4: 12000, 3: 10000, 2: 7000}
 
@@ -59,7 +60,6 @@ def monthly_behaviour(num_of_proj,  bid):
                 taken_projects += 1
             else:
                 people = []
-                missed_projects += 1
         elif len(people) < workers_requirement:
             # if we didn't manage to form a team
             people = []
@@ -80,5 +80,15 @@ for monthly_proj in num_of_projects_per_month:
     total_missed_projects += missed_projects
     total_taken_projects += taken_projects
 
+total_profit = [a - b for a, b in zip(total_revenue, total_costs)]
 
-print("Hello world!")
+ax = sn.histplot(total_revenue, kde=True, bins=50)
+ax.set(xlabel="Revenue", ylabel="Probability")
+plt.show()
+
+a2 = sn.histplot(total_profit, kde=True, bins=50)
+a2.set(xlabel="Profit", ylabel="Probability")
+plt.show()
+
+proportion_of_missed_proj = total_missed_projects / \
+    (total_taken_projects + total_missed_projects)
