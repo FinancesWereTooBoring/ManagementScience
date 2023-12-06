@@ -34,6 +34,7 @@ def monthly_behaviour(num_of_proj,  bid):
     monthly_revenue = 0
     missed_projects = 0
     taken_projects = 0
+    man_months = 0
     for project in range(num_of_proj):
         scope_of_project = np.random.choice([3, 6], p=[0.5, 0.5])
         workers_requirement = np.random.choice(
@@ -56,6 +57,8 @@ def monthly_behaviour(num_of_proj,  bid):
                 # I also assume that they start working on project from the next month. That's why the calc of costs is done on the beginning of the each month.
                 for person in people:
                     employees_scenario_1[person]["when_will_be_available"] = scope_of_project
+                    # Add only the ones who are actually in the project
+                    man_months += scope_of_project
                 monthly_revenue += bid * workers_requirement * scope_of_project
                 taken_projects += 1
             else:
@@ -68,27 +71,33 @@ def monthly_behaviour(num_of_proj,  bid):
             # if we formed a team with more people in a team than needed - error
             print("More people in a team than needed")
             break
-    return monthly_costs, monthly_revenue, missed_projects, taken_projects
+    return monthly_costs, monthly_revenue, missed_projects, taken_projects, man_months
 
 
-total_costs, total_revenue, total_missed_projects, total_taken_projects = [], [], 0, 0
+total_costs, total_revenue, total_missed_projects, total_taken_projects, total_man_months = [], [], 0, 0, 0
 for monthly_proj in num_of_projects_per_month:
-    monthly_costs, monthly_revenue, missed_projects, taken_projects = monthly_behaviour(
+    monthly_costs, monthly_revenue, missed_projects, taken_projects, man_months = monthly_behaviour(
         monthly_proj, 20000)
     total_costs.append(monthly_costs)
     total_revenue.append(monthly_revenue)
     total_missed_projects += missed_projects
     total_taken_projects += taken_projects
+    total_man_months += man_months
 
-total_profit = [a - b for a, b in zip(total_revenue, total_costs)]
-
+# Revenue plot
 ax = sn.histplot(total_revenue, kde=True, bins=50)
 ax.set(xlabel="Revenue", ylabel="Probability")
 plt.show()
 
+# Profit plot
+total_profit = [a - b for a, b in zip(total_revenue, total_costs)]
 a2 = sn.histplot(total_profit, kde=True, bins=50)
 a2.set(xlabel="Profit", ylabel="Probability")
 plt.show()
 
+# Missed proj/all the projs
 proportion_of_missed_proj = total_missed_projects / \
-    (total_taken_projects + total_missed_projects)
+    (num_of_projects_per_month.sum())
+
+# Utilization of man-months
+utilization_man_months = total_man_months/(40 * 50)
