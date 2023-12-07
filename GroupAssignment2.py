@@ -3,6 +3,7 @@ import numpy as np
 import gurobipy as gb
 import seaborn as sn
 import matplotlib.pyplot as plt
+from scipy.optimize import minimize
 
 
 # Set up dictionaries
@@ -18,13 +19,32 @@ def likelihood_of_accepting(q, b):
     return outcome
 
 
+def likelihood_of_accepting_greedy(q, b, n):
+    result = q * b * n*(1/(1 + np.exp(-6.5 - 2*q + 0.0005*b)))
+    return result
+
+
+def max_greedy(param, n, q, d):
+    b = param
+    result = -b*n*d*(1 / (1 + np.exp(-6.5 - 2 * q + 0.0005 * b)))
+    return result
+
+
+# Maybe there is a better place to put those, but idk yet.
+initial_guess = [0]
+
+# Set bounds for optimization
+bounds = [(-np.inf, np.inf)]
+
+
 class Simulation:
-    def __init__(self, bid=None, n=50, flow_bid=False):
+    def __init__(self, bid=None, n=50, flow_bid=False, greedy=False):
         self.n = n
         self.num_of_projects_per_month = np.random.poisson(4, size=n)
         self.employees_scenario_1 = create_workers()
         self.bid = bid
         self.flow_bid = flow_bid
+        self.greedy = greedy
         self.intitalisation()
 
     def monthly_behaviour(self, num_of_proj):
@@ -56,7 +76,13 @@ class Simulation:
                 potential_quality = np.mean(
                     [self.employees_scenario_1[worker]["level"] for worker in people])
                 if not self.bid:
-                    self.bid = 2000 * (2 * potential_quality + 6.5)
+                    if not self.greedy:
+                        self.bid = 2000 * (2 * potential_quality + 6.5)
+                    else:
+                        # It's maximizing thing for Strategy 4
+                        max_bid = minimize(max_greedy, initial_guess, bounds=bounds, args=(
+                            workers_requirement, potential_quality, scope_of_project,), method='L-BFGS-B')
+                        self.bid = max_bid.x[0]
                 is_accepted = likelihood_of_accepting(
                     q=potential_quality, b=self.bid)
                 # I am not sure if we have to calculate it like this, or just take expected values.
@@ -80,7 +106,7 @@ class Simulation:
                 print("More people in a team than needed")
                 break
 
-            if self.flow_bid:
+            if self.flow_bid or self.greedy:
                 self.bid = None
 
         return monthly_costs, monthly_revenue, missed_projects, taken_projects, man_months
@@ -145,3 +171,12 @@ strategy_3.revenue_plot()
 strategy_3.profit_plot()
 strategy_3.proportion_of_missed_proj
 strategy_3.utilization_man_months
+
+# Strategy 4:
+
+strategy_4 = Simulation(n=50, greedy=True)
+strategy_4.revenue_plot()
+strategy_4.profit_plot()
+strategy_4.proportion_of_missed_proj
+strategy_4.utilization_man_months
+np.mean(strategy_4.total_revenue)
