@@ -161,7 +161,7 @@ class Simulation:
                     potential_team = []
 
             elif len(potential_team) < workers_requirement:
-                # if we didn't manage to form a team.
+                # If we didn't manage to form a team.
                 potential_team = []
                 # I add missed projects only in this case, because in the assignment he says - "he proportion of unaddressed
                 # projects due to resource limitations." So we basically find, how many projects we lost only because we don't have enough people.
