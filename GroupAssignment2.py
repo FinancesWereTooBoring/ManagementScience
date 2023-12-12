@@ -65,7 +65,7 @@ class Simulation:
     class. Maybe we will need to break it for later strategies, but it worked fine for strategies 1 - 4. 
     """
 
-    def __init__(self, bid=None, n=50, fixed_probability=False, greedy=False):
+    def __init__(self, initialization=10000, bid=None, n=50, fixed_probability=False, greedy=False):
         """Initiate the class.
 
         Args:
@@ -74,6 +74,7 @@ class Simulation:
             fixed_probability (bool, optional): Indicator, if it's a fixed probability approach. Defaults to False.
             greedy (bool, optional): Indicator, if it's a greedy pricing. Defaults to False.
         """
+        self.initialization = initialization
         self.n = n
         self.num_of_projects_per_month = np.random.poisson(4, size=self.n)
         self.employees_scenario_1 = create_workers()
@@ -83,7 +84,7 @@ class Simulation:
 
         # This one means that whenever you create Simulation object it already runs the simulation.
         # And you directly can get all the values and plots.
-        self.intitalisation()
+        self.total_initialization()
 
     def monthly_behaviour(self, number_of_projects):
         """This is a main function. It simulates the monthly decisions - costs, revenue calculations, 
@@ -176,35 +177,49 @@ class Simulation:
 
         return monthly_revenue, missed_projects, taken_projects, man_months
 
-    def intitalisation(self):
+    def _one_go_intitalisation(self):
         """This is orchestration function. It runs the for loop with monthly simulations and creates all the 
         necessary metrics and values for the post simulation analysis.
         """
         # Costs and revenue are saved in lists, and not as an integer, because we will need them further for plots.
-        self.total_revenue, self.total_missed_projects, self.total_taken_projects, self.total_man_months = [], 0, 0, 0
+        one_go_total_revenue, one_go_total_missed_projects, one_go_total_taken_projects, one_go_total_man_months = 0, 0, 0, 0
 
         # This is monthly simulation creation.
         for monthly_proj in self.num_of_projects_per_month:
             monthly_revenue, missed_projects, taken_projects, man_months = self.monthly_behaviour(
                 monthly_proj)
-            self.total_revenue.append(monthly_revenue)
-            self.total_missed_projects += missed_projects
-            self.total_taken_projects += taken_projects
-            self.total_man_months += man_months
+            one_go_total_revenue += monthly_revenue
+            one_go_total_missed_projects += missed_projects
+            one_go_total_taken_projects += taken_projects
+            one_go_total_man_months += man_months
 
-        self.total_costs = [monthly_costs] * self.n
+        one_go_total_costs = monthly_costs * self.n
 
         # Create the total profit list.
-        self.total_profit = [self.total_revenue[i] - self.total_costs[i]
-                             for i in range(len(self.total_revenue))]
+        one_go_total_profit = one_go_total_revenue - one_go_total_costs
 
         # Missed proj/all the projects. I calulate the total like this,
         # because the proportion missed_proj/taken_proj is more than 1.
-        self.proportion_of_missed_proj = self.total_missed_projects / \
+        one_go_proportion_of_missed_proj = one_go_total_missed_projects / \
             (self.num_of_projects_per_month.sum())
 
         # Utilization of man-months out of available 40 people * 50 months.
-        self.utilization_man_months = self.total_man_months/(40 * 50)
+        one_go_utilization_man_months = one_go_total_man_months/(40 * 50)
+
+        return one_go_total_revenue, one_go_total_profit, one_go_proportion_of_missed_proj, one_go_utilization_man_months
+
+    def total_initialization(self):
+
+        self.total_revenue, self.total_profit, self.proportion_of_missed_proj, self.total_utilization = [], [], [], []
+
+        for initialization in range(self.initialization + 1):
+
+            one_go_total_revenue, one_go_total_profit, one_go_proportion_of_missed_proj, one_go_utilization_man_months = self._one_go_intitalisation()
+            self.total_revenue.append(one_go_total_revenue)
+            self.total_profit.append(one_go_total_profit)
+            self.proportion_of_missed_proj.append(
+                one_go_proportion_of_missed_proj)
+            self.total_utilization.append(one_go_utilization_man_months)
 
     def revenue_plot(self):
         """Creates revenue histogram.
@@ -224,13 +239,29 @@ class Simulation:
         plt.show()
         plt.close()
 
+    def missed_project_proportion_plot(self):
+        """Creates profit histogram.
+        """
+        a2 = sn.histplot(self.proportion_of_missed_proj, kde=True, bins=50)
+        a2.set(xlabel="Proportion of missed project", ylabel="Probability")
+        plt.show()
+        plt.close()
+
+    def man_month_utilization_plot(self):
+        """Creates profit histogram.
+        """
+        a2 = sn.histplot(self.total_utilization, kde=True, bins=50)
+        a2.set(xlabel="Man month utilization", ylabel="Probability")
+        plt.show()
+        plt.close()
+
 
 # Strategy 1:
 scenario_1 = Simulation(bid=20000)
 scenario_1.revenue_plot()
 scenario_1.profit_plot()
-scenario_1.proportion_of_missed_proj
-scenario_1.utilization_man_months
+scenario_1.missed_project_proportion_plot()
+scenario_1.man_month_utilization_plot()
 
 # Strategy 2:
 proposed_bids = np.random.randint(100, 50000, 100)
@@ -249,14 +280,14 @@ for bid in proposed_bids:
 strategy_3 = Simulation(n=50, fixed_probability=True)
 strategy_3.revenue_plot()
 strategy_3.profit_plot()
-strategy_3.proportion_of_missed_proj
-strategy_3.utilization_man_months
+strategy_3.missed_project_proportion_plot()
+strategy_3.man_month_utilization_plot()
 
 # Strategy 4:
 
 strategy_4 = Simulation(n=50, greedy=True)
 strategy_4.revenue_plot()
 strategy_4.profit_plot()
-strategy_4.proportion_of_missed_proj
-strategy_4.utilization_man_months
+strategy_4.missed_project_proportion_plot()
+strategy_4.man_month_utilization_plot()
 np.mean(strategy_4.total_revenue)
