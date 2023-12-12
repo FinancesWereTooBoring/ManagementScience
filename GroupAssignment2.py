@@ -4,6 +4,7 @@ import gurobipy as gb
 import seaborn as sn
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
+from multiprocessing import Pool, cpu_count, Process
 
 
 # Costs per worker level
@@ -117,6 +118,7 @@ class Simulation:
             potential_team = []
 
             for worker, values in self.employees_scenario_1.items():
+                print(worker, values)
                 # We checked for each worker their availability.
                 # I just assume for now that better workers are checked first
                 if len(potential_team) < workers_requirement:
@@ -213,7 +215,7 @@ class Simulation:
         self.total_revenue, self.total_profit, self.proportion_of_missed_proj, self.total_utilization = [], [], [], []
 
         for initialization in range(self.initialization + 1):
-
+            print(initialization)
             one_go_total_revenue, one_go_total_profit, one_go_proportion_of_missed_proj, one_go_utilization_man_months = self._one_go_intitalisation()
             self.total_revenue.append(one_go_total_revenue)
             self.total_profit.append(one_go_total_profit)
@@ -264,6 +266,7 @@ strategy_1.profit_plot()
 strategy_1.missed_project_proportion_plot()
 strategy_1.man_month_utilization_plot()
 """
+"""
 # Strategy 2:
 np.random.seed(1810)
 proposed_bids = np.random.randint(20000, 30000, 10)
@@ -291,12 +294,28 @@ strategy_3.revenue_plot()
 strategy_3.profit_plot()
 strategy_3.missed_project_proportion_plot()
 strategy_3.man_month_utilization_plot()
-
+"""
 # Strategy 4:
 
+
+def run_simulation_greedy():
+    strategy = Simulation(n=50, greedy=True)
+    strategy.revenue_plot()
+    strategy.profit_plot()
+    strategy.missed_project_proportion_plot()
+    strategy.man_month_utilization_plot()
+
+
+"""
 strategy_4 = Simulation(n=50, greedy=True)
 strategy_4.revenue_plot()
 strategy_4.profit_plot()
 strategy_4.missed_project_proportion_plot()
 strategy_4.man_month_utilization_plot()
 np.mean(strategy_4.total_revenue)
+"""
+
+if __name__ == '__main__':
+    p = Process(target=run_simulation_greedy)
+    p.start()
+    p.join()
