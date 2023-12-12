@@ -256,24 +256,33 @@ class Simulation:
         plt.close()
 
 
+"""
 # Strategy 1:
-scenario_1 = Simulation(bid=20000)
-scenario_1.revenue_plot()
-scenario_1.profit_plot()
-scenario_1.missed_project_proportion_plot()
-scenario_1.man_month_utilization_plot()
-
+strategy_1 = Simulation(bid=20000)
+strategy_1.revenue_plot()
+strategy_1.profit_plot()
+strategy_1.missed_project_proportion_plot()
+strategy_1.man_month_utilization_plot()
+"""
 # Strategy 2:
-proposed_bids = np.random.randint(100, 50000, 100)
+np.random.seed(1810)
+proposed_bids = np.random.randint(20000, 30000, 10)
 highest_expected_revenue = 0
+# highest_expected_revenue = 39959221.68823118
 best_bid = 0
+# best bid = 24647
 outcome = {}
 for bid in proposed_bids:
-    scenario = Simulation(bid)
-    if np.mean(scenario.total_revenue) > highest_expected_revenue:
+    print(f"Current bid {bid}")
+    strategy = Simulation(initialization=10000, bid=bid)
+    strategy.revenue_plot()
+    strategy.profit_plot()
+    strategy.missed_project_proportion_plot()
+    strategy.man_month_utilization_plot()
+    if np.mean(strategy.total_revenue) > highest_expected_revenue:
         best_bid = bid
-        highest_expected_revenue = np.mean(scenario.total_revenue)
-    outcome[bid] = np.mean(scenario.total_revenue)
+        highest_expected_revenue = np.mean(strategy.total_revenue)
+    outcome[bid] = np.mean(strategy.total_revenue)
 
 # Strategy 3:
 
