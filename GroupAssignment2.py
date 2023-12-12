@@ -8,6 +8,7 @@ from scipy.optimize import minimize
 
 # Costs per worker level
 costs = {5: 16000, 4: 12000, 3: 10000, 2: 7000}
+monthly_costs = 16000 * 8 + 12000 * 12 + 10000 * 15 + 7000 * 5
 
 
 def likelihood_of_accepting(q, b):
@@ -95,11 +96,9 @@ class Simulation:
             tuple: revenues, costs and other proportions.
         """
         # We find the sum of costs of all workers who are currently engaged in project.
-        monthly_costs = 0
         for key in self.employees_scenario_1.keys():
             # We are paying only to the working people, not all of them.
             if self.employees_scenario_1[key]["when_will_be_available"] != 0:
-                monthly_costs += costs[self.employees_scenario_1[key]["level"]]
                 # We reduce amount of "busy" periods.
                 self.employees_scenario_1[key]["when_will_be_available"] -= 1
         monthly_revenue = 0
@@ -175,24 +174,25 @@ class Simulation:
             if self.fixed_probability or self.greedy:
                 self.bid = None
 
-        return monthly_costs, monthly_revenue, missed_projects, taken_projects, man_months
+        return monthly_revenue, missed_projects, taken_projects, man_months
 
     def intitalisation(self):
         """This is orchestration function. It runs the for loop with monthly simulations and creates all the 
         necessary metrics and values for the post simulation analysis.
         """
         # Costs and revenue are saved in lists, and not as an integer, because we will need them further for plots.
-        self.total_costs, self.total_revenue, self.total_missed_projects, self.total_taken_projects, self.total_man_months = [], [], 0, 0, 0
+        self.total_revenue, self.total_missed_projects, self.total_taken_projects, self.total_man_months = [], 0, 0, 0
 
         # This is monthly simulation creation.
         for monthly_proj in self.num_of_projects_per_month:
-            monthly_costs, monthly_revenue, missed_projects, taken_projects, man_months = self.monthly_behaviour(
+            monthly_revenue, missed_projects, taken_projects, man_months = self.monthly_behaviour(
                 monthly_proj)
-            self.total_costs.append(monthly_costs)
             self.total_revenue.append(monthly_revenue)
             self.total_missed_projects += missed_projects
             self.total_taken_projects += taken_projects
             self.total_man_months += man_months
+
+        self.total_costs = [monthly_costs] * self.n
 
         # Create the total profit list.
         self.total_profit = [self.total_revenue[i] - self.total_costs[i]
