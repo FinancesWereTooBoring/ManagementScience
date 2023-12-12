@@ -118,7 +118,6 @@ class Simulation:
             potential_team = []
 
             for worker, values in self.employees_scenario_1.items():
-                print(worker, values)
                 # We checked for each worker their availability.
                 # I just assume for now that better workers are checked first
                 if len(potential_team) < workers_requirement:
@@ -258,14 +257,15 @@ class Simulation:
         plt.close()
 
 
-"""
 # Strategy 1:
 strategy_1 = Simulation(bid=20000)
 strategy_1.revenue_plot()
 strategy_1.profit_plot()
 strategy_1.missed_project_proportion_plot()
 strategy_1.man_month_utilization_plot()
-"""
+np.mean(strategy_1.total_revenue)
+# exp rev = 36968675.13248675
+
 """
 # Strategy 2:
 np.random.seed(1810)
@@ -286,7 +286,7 @@ for bid in proposed_bids:
         best_bid = bid
         highest_expected_revenue = np.mean(strategy.total_revenue)
     outcome[bid] = np.mean(strategy.total_revenue)
-
+"""
 # Strategy 3:
 
 strategy_3 = Simulation(n=50, fixed_probability=True)
@@ -294,6 +294,8 @@ strategy_3.revenue_plot()
 strategy_3.profit_plot()
 strategy_3.missed_project_proportion_plot()
 strategy_3.man_month_utilization_plot()
+np.mean(strategy_3.total_revenue)
+#Exp rec = 44704428.15718428
 """
 # Strategy 4:
 
