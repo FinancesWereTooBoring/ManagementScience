@@ -11,11 +11,14 @@ def create_workers():
     main_dict.update(
         {f"worker_{i}": {"level": 5, "when_will_be_available": 0} for i in range(1, num_keys_level_5 + 1)})
     main_dict.update({f"worker_{i}": {"level": 4, "when_will_be_available": 0} for i in range(
-        num_keys_level_2 + 1, num_keys_level_2 + num_keys_level_4 + 1)})
+        num_keys_level_5+1, num_keys_level_5 + num_keys_level_4 + 1)})
     main_dict.update({f"worker_{i}": {"level": 3, "when_will_be_available": 0} for i in range(
-        num_keys_level_2 + num_keys_level_4 + 1, num_keys_level_2 + num_keys_level_4 + num_keys_level_3 + 1)})
-    main_dict.update({f"worker_{i}": {"level": 2, "when_will_be_available": 0} for i in range(num_keys_level_2 + num_keys_level_4 +
-                     num_keys_level_3 + 1, num_keys_level_2 + num_keys_level_4 + num_keys_level_3 + num_keys_level_2 + 1)})
+        num_keys_level_5 + num_keys_level_4 + 1, num_keys_level_5 + num_keys_level_4 + num_keys_level_3 + 1)})
+    main_dict.update({f"worker_{i}": {"level": 2, "when_will_be_available": 0} for i in range(num_keys_level_5 + num_keys_level_4 +
+                     num_keys_level_3 + 1, num_keys_level_5 + num_keys_level_4 + num_keys_level_3 + num_keys_level_2 + 1)})
 
     # Print the resulting dictionary
     return main_dict
+
+
+create_workers()
