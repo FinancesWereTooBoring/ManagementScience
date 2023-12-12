@@ -214,7 +214,7 @@ class Simulation:
         self.total_revenue, self.total_profit, self.proportion_of_missed_proj, self.total_utilization = [], [], [], []
 
         for initialization in range(self.initialization + 1):
-            print(initialization)
+            # print(initialization)
             one_go_total_revenue, one_go_total_profit, one_go_proportion_of_missed_proj, one_go_utilization_man_months = self._one_go_intitalisation()
             self.total_revenue.append(one_go_total_revenue)
             self.total_profit.append(one_go_total_profit)
@@ -257,6 +257,7 @@ class Simulation:
         plt.close()
 
 
+"""
 # Strategy 1:
 strategy_1 = Simulation(bid=20000)
 strategy_1.revenue_plot()
@@ -265,11 +266,11 @@ strategy_1.missed_project_proportion_plot()
 strategy_1.man_month_utilization_plot()
 np.mean(strategy_1.total_revenue)
 # exp rev = 36968675.13248675
-
 """
+
 # Strategy 2:
 np.random.seed(1810)
-proposed_bids = np.random.randint(20000, 30000, 10)
+proposed_bids = np.random.randint(15000, 40000, 10)
 highest_expected_revenue = 0
 # highest_expected_revenue = 39959221.68823118
 best_bid = 0
@@ -286,6 +287,7 @@ for bid in proposed_bids:
         best_bid = bid
         highest_expected_revenue = np.mean(strategy.total_revenue)
     outcome[bid] = np.mean(strategy.total_revenue)
+
 """
 # Strategy 3:
 
@@ -295,7 +297,8 @@ strategy_3.profit_plot()
 strategy_3.missed_project_proportion_plot()
 strategy_3.man_month_utilization_plot()
 np.mean(strategy_3.total_revenue)
-#Exp rec = 44704428.15718428
+#Exp rev = 42943152.48475152
+"""
 """
 # Strategy 4:
 
@@ -307,7 +310,7 @@ def run_simulation_greedy():
     strategy.missed_project_proportion_plot()
     strategy.man_month_utilization_plot()
 
-
+"""
 """
 strategy_4 = Simulation(n=50, greedy=True)
 strategy_4.revenue_plot()
@@ -316,8 +319,9 @@ strategy_4.missed_project_proportion_plot()
 strategy_4.man_month_utilization_plot()
 np.mean(strategy_4.total_revenue)
 """
-
+"""
 if __name__ == '__main__':
     p = Process(target=run_simulation_greedy)
     p.start()
     p.join()
+"""
